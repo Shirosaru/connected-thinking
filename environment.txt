@@ -1,0 +1,19 @@
+# Conda environment setup for connected_thinking
+# Use GPU variant if your machine has NVIDIA CUDA support.
+
+# 1) Create and activate environment
+conda create -n connected-thinking python=3.10 -y
+conda activate connected-thinking
+
+# 2A) GPU install (recommended when CUDA is available)
+conda install pytorch pytorch-cuda=12.1 -c pytorch -c nvidia -y
+pip install matplotlib
+
+# 2B) CPU-only install (use this instead if no CUDA GPU)
+# conda install pytorch cpuonly -c pytorch -y
+# pip install matplotlib
+
+# 3) Run
+# cd /home2/connected_thinking
+# python simple_nn.py
+# python concept_graph.py

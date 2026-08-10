@@ -1,0 +1,1 @@
+i just want to experiment with a very simle type of ai so instead of a 1 to 1 or 2 to 1 forward and back propagation, can you do a 7 to 3 forward and back propagation ? I assume it will become like a brain network
