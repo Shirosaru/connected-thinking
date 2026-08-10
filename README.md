@@ -2,6 +2,10 @@
 
 This project explores a more connected, idea-bridging form of neural modeling. Instead of treating two inputs as two independent branches that simply collapse into one output, the network builds a shared bridge representation so related concepts can be fused in a more expressive way.
 
+## Authorship
+
+This repository is authored and maintained by the project owner. The code and documentation are provided under the MIT License for open use, modification, and distribution.
+
 ## What is in this repo?
 
 - `simple_nn.py` — a PyTorch-based bridge network with:
