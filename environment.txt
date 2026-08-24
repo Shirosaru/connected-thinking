@@ -1,19 +1,26 @@
 # Conda environment setup for connected_thinking
 # Use GPU variant if your machine has NVIDIA CUDA support.
+#
+# NOTE: export PYTHONNOUSERSITE=1 (or pass it inline) before running pip/python
+# in this env if you have packages installed in ~/.local — otherwise your user
+# site-packages can shadow the env's own packages.
 
 # 1) Create and activate environment
 conda create -n connected-thinking python=3.10 -y
 conda activate connected-thinking
 
 # 2A) GPU install (recommended when CUDA is available)
-conda install pytorch pytorch-cuda=12.1 -c pytorch -c nvidia -y
-pip install matplotlib
+# For recent GPUs (e.g. Blackwell/RTX 50-series) conda's pytorch-cuda=12.1
+# build is too old to support the hardware; install a CUDA 12.8 wheel via pip.
+PYTHONNOUSERSITE=1 pip install --index-url https://download.pytorch.org/whl/cu128 torch
+PYTHONNOUSERSITE=1 pip install numpy matplotlib pytest
 
 # 2B) CPU-only install (use this instead if no CUDA GPU)
 # conda install pytorch cpuonly -c pytorch -y
-# pip install matplotlib
+# pip install numpy matplotlib pytest
 
 # 3) Run
 # cd /home2/connected_thinking
-# python simple_nn.py
-# python concept_graph.py
+# PYTHONNOUSERSITE=1 python simple_nn.py
+# PYTHONNOUSERSITE=1 python concept_graph.py
+# PYTHONNOUSERSITE=1 python -m pytest -q tests/test_bridge_net.py

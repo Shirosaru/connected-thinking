@@ -230,6 +230,146 @@ def build_yellow_lemon_graph():
     return g
 
 
+def attach_decision_making_graph(g):
+    """Bridge the idea graph into a decision-making subgraph.
+
+    Existing concepts (attention, focus, balance, contrast, creativity, memory)
+    become the inputs that a decision process needs, and the decision nodes
+    converge on a single question: how do we make a good decision?
+    """
+    decision_nodes = [
+        "good_decision", "good_outcome", "process_quality", "clear_criteria",
+        "information_gathering", "diverse_perspectives", "pre_mortem", "bias_awareness",
+        "overconfidence", "sunk_cost", "confirmation_bias", "reversibility",
+        "two_way_door", "one_way_door", "expected_value", "risk_tolerance",
+        "second_order_effects", "opportunity_cost", "decision_journal", "feedback_loop",
+        "commitment", "decisiveness", "regret_minimization", "time_pressure", "clarity",
+    ]
+    for n in decision_nodes:
+        g.add_node(n)
+
+    # Bridges from the existing idea graph into decision-making inputs.
+    g.connect("attention", "information_gathering", 0.80, "causes")
+    g.connect("focus", "clear_criteria", 0.82, "causes")
+    g.connect("balance", "risk_tolerance", 0.75, "associated_with")
+    g.connect("contrast", "diverse_perspectives", 0.72, "metaphor")
+    g.connect("creativity", "second_order_effects", 0.68, "evokes")
+    g.connect("memory", "decision_journal", 0.70, "associated_with")
+
+    # Evaluation chain: information and criteria feed expected-value reasoning.
+    g.connect("information_gathering", "clear_criteria", 0.78, "causes")
+    g.connect("clear_criteria", "expected_value", 0.85, "causes")
+    g.connect("risk_tolerance", "expected_value", 0.70, "causes")
+    g.connect("second_order_effects", "expected_value", 0.73, "causes")
+    g.connect("opportunity_cost", "expected_value", 0.66, "causes")
+    g.connect("expected_value", "good_decision", 0.90, "causes")
+
+    # Bias-correction chain: exposure and pre-mortems suppress known failure modes.
+    g.connect("diverse_perspectives", "bias_awareness", 0.86, "causes")
+    g.connect("pre_mortem", "bias_awareness", 0.80, "causes")
+    g.connect("pre_mortem", "second_order_effects", 0.66, "evokes")
+    g.connect("bias_awareness", "overconfidence", -0.70, "inhibits", bidirectional=False)
+    g.connect("bias_awareness", "confirmation_bias", -0.65, "inhibits", bidirectional=False)
+    g.connect("bias_awareness", "sunk_cost", -0.60, "inhibits", bidirectional=False)
+    g.connect("overconfidence", "good_decision", -0.55, "contrast", bidirectional=False)
+    g.connect("sunk_cost", "good_decision", -0.60, "contrast", bidirectional=False)
+    g.connect("confirmation_bias", "good_decision", -0.50, "contrast", bidirectional=False)
+
+    # Process-over-outcome chain: decisions are judged by process, not just result.
+    g.connect("decision_journal", "feedback_loop", 0.88, "causes")
+    g.connect("feedback_loop", "process_quality", 0.85, "causes")
+    g.connect("process_quality", "good_decision", 0.92, "causes")
+    g.connect("good_decision", "good_outcome", 0.55, "associated_with")
+
+    # Reversibility chain: door type sets how much deliberation a call deserves.
+    g.connect("reversibility", "two_way_door", 0.90, "is_a", bidirectional=False)
+    g.connect("reversibility", "one_way_door", -0.40, "contrast", bidirectional=False)
+    g.connect("two_way_door", "decisiveness", 0.82, "causes")
+    g.connect("one_way_door", "clear_criteria", 0.75, "causes")
+    g.connect("one_way_door", "time_pressure", 0.40, "associated_with")
+    g.connect("time_pressure", "clarity", -0.50, "contrast")
+    g.connect("clarity", "clear_criteria", 0.70, "causes")
+
+    # Closing the loop: regret minimization and commitment turn judgment into action.
+    g.connect("regret_minimization", "good_decision", 0.60, "causes")
+    g.connect("decisiveness", "commitment", 0.68, "causes")
+    g.connect("commitment", "process_quality", 0.55, "causes")
+
+    return decision_nodes
+
+
+DECISION_ACTION_TIPS = {
+    "information_gathering": "Gather enough information to see the shape of the problem, then stop before analysis paralysis sets in.",
+    "diverse_perspectives": "Ask someone who disagrees with you before you decide, not after.",
+    "pre_mortem": "Imagine the decision has already failed and write down why, before you commit.",
+    "bias_awareness": "Name the bias you might be falling for out loud; naming it weakens it.",
+    "clear_criteria": "Write down what 'good' looks like before you compare options, not after.",
+    "expected_value": "Weigh outcomes by how likely and how big they are, not by how vivid they feel.",
+    "reversibility": "Ask first: can this be undone? Reversible calls deserve speed, not deliberation.",
+    "two_way_door": "Treat reversible decisions as cheap experiments, and move fast.",
+    "one_way_door": "Slow down for irreversible decisions and demand real clarity first.",
+    "decision_journal": "Write down the decision and your reasoning before you know the outcome.",
+    "feedback_loop": "Review past decisions against their reasoning, not just their results.",
+    "process_quality": "Judge yourself on whether the process was sound, even when the outcome was bad.",
+    "regret_minimization": "Ask which choice you would regret more in ten years, not in ten minutes.",
+    "opportunity_cost": "Remember every choice quietly cancels the next-best alternative.",
+    "commitment": "Once a reversible decision is made, commit fully instead of re-litigating it.",
+}
+
+
+def decision_recommendations(activation, top_k=8):
+    """Turn decision-node activation into a ranked, actionable checklist."""
+    relevant = {
+        k: v for k, v in activation.items() if k in DECISION_ACTION_TIPS
+    }
+    ranked = sorted(relevant.items(), key=lambda x: x[1], reverse=True)
+    return [(name, score, DECISION_ACTION_TIPS[name]) for name, score in ranked[:top_k]]
+
+
+def generate_decision_theories(activation):
+    active = {k for k, v in activation.items() if v > 0.40}
+    suppressed = {k for k, v in activation.items() if v < -0.15}
+    theories = []
+
+    if {"information_gathering", "clear_criteria", "expected_value"}.issubset(active):
+        theories.append(
+            "Structured Evaluation Theory: gathering information and fixing clear criteria upstream "
+            "lets expected-value reasoning become the decisive lever, instead of gut instinct alone."
+        )
+
+    if {"diverse_perspectives", "bias_awareness"}.issubset(active):
+        theories.append(
+            "Bias Correction Theory: exposing a decision to diverse perspectives is the most reliable way "
+            "to catch blind spots before they harden into commitments."
+        )
+
+    if {"decision_journal", "feedback_loop", "process_quality"}.issubset(active):
+        theories.append(
+            "Process Over Outcome Theory: recording decisions and reviewing them later builds the feedback "
+            "loop that improves judgment over time, independent of any single outcome."
+        )
+
+    if {"reversibility", "two_way_door", "decisiveness"}.issubset(active):
+        theories.append(
+            "Reversibility Speed Theory: reversible decisions should be made quickly and cheaply, freeing "
+            "deliberation time for the rare irreversible, one-way-door choices."
+        )
+
+    if "bias_awareness" in active and suppressed & {"overconfidence", "sunk_cost", "confirmation_bias"}:
+        theories.append(
+            "Debiasing Payoff Theory: actively suppressing overconfidence, sunk-cost thinking, and "
+            "confirmation bias raises decision quality more reliably than acquiring more information."
+        )
+
+    if not theories:
+        theories.append(
+            "Decision Web Theory: attention, balance, and contrast from the idea graph feed directly into "
+            "criteria-setting and bias-checking, so a good decision is the outcome of a well-connected process."
+        )
+
+    return theories
+
+
 def attach_exponential_layers(
     g,
     seed_nodes,
@@ -360,6 +500,10 @@ def generate_theories(activation):
 def main():
     graph = build_yellow_lemon_graph()
 
+    # Bridge the idea graph into a decision-making subgraph before expansion,
+    # so the two keep sharing structure rather than growing in isolation.
+    decision_nodes = attach_decision_making_graph(graph)
+
     # Explicit exponential expansion: each layer branches into new concept clusters.
     layers = attach_exponential_layers(
         graph,
@@ -371,7 +515,15 @@ def main():
     )
     layer_counts, multipliers = layer_growth_report(layers)
 
-    seeds = {"yellow": 1.0, "lemon": 1.0}
+    seeds = {
+        "yellow": 1.0,
+        "lemon": 1.0,
+        "clear_criteria": 0.6,
+        "diverse_perspectives": 0.6,
+        "decision_journal": 0.5,
+        "pre_mortem": 0.5,
+        "reversibility": 0.5,
+    }
     activation = graph.diffuse(
         seeds,
         steps=8,
@@ -399,6 +551,19 @@ def main():
     print("\nGenerated connection theories:")
     for i, t in enumerate(generate_theories(activation), start=1):
         print(f"  {i}. {t}")
+
+    decision_activation = {k: v for k, v in activation.items() if k in decision_nodes}
+    print("\nDecision-making activation (how to make a good decision):")
+    for name, score in top_activated(decision_activation, top_k=len(decision_nodes)):
+        print(f"  {name:20s} {score:+.4f}")
+
+    print("\nGenerated decision-making theories:")
+    for i, t in enumerate(generate_decision_theories(activation), start=1):
+        print(f"  {i}. {t}")
+
+    print("\nActionable checklist, ranked by current activation:")
+    for i, (name, score, tip) in enumerate(decision_recommendations(activation), start=1):
+        print(f"  {i}. [{name}, {score:+.2f}] {tip}")
 
 
 if __name__ == "__main__":

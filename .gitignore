@@ -3,3 +3,28 @@ __pycache__/
 .pytest_cache/
 .ipynb_checkpoints/
 *.log
+
+# Generated / reproducible output artifacts -- regenerate via the scripts
+# that produce them (concept_graph.py, target_panel.py) instead of committing.
+concept_graph_export.json
+target_panel_output*.txt
+*_output.txt
+*_output_old.txt
+
+# Local data / scratch -- not meant to be published
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Secrets / environment
+.env
+.env.*
+*.key
+secrets.json
+
+# OS / editor cruft
+.DS_Store
+*.swp
+*.swo
+*.swn
